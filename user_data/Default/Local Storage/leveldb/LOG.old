@@ -1,0 +1,6 @@
+2026/02/08-03:59:05.850 1e30 Reusing MANIFEST C:\Users\benz\LLMs\chatgpt-puppeteer\__user_data\Default\Local Storage\leveldb/MANIFEST-000001
+2026/02/08-03:59:05.894 1e30 Recovering log #187
+2026/02/08-03:59:05.912 1e30 Reusing old log C:\Users\benz\LLMs\chatgpt-puppeteer\__user_data\Default\Local Storage\leveldb/000187.log 
+2026/02/08-04:02:07.156 3938 Level-0 table #191: started
+2026/02/08-04:02:07.178 3938 Level-0 table #191: 73337 bytes OK
+2026/02/08-04:02:07.185 3938 Delete type=0 #187

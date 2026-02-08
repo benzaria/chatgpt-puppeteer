@@ -17,8 +17,9 @@ declare global {
             port: number
             timeout: number
             model: Model
-            userAgent: string
             instruction: (model?: Model) => string
+            userAgent: string
+            userData: string
         }
     } & Record<any, any>
 

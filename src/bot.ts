@@ -21,7 +21,7 @@ async function initPage({
   echo.inf('Initializing Puppeteer...' + prvLine)
   const browser = await puppeteer.launch({
     headless: isHeadless as any,
-    userDataDir: './__user_data',
+    userDataDir: env.userData,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
 

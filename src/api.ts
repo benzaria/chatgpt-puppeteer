@@ -71,8 +71,8 @@ app.post('/v1/chat/completions', async (req, res) => {
 // Start the browser first, then the server
 if (import.meta.main) {
   (async () => {
-    await initPage({headless: false})
-    await initModel()
+    await initPage({headless: 'new', temp: false})
+    await initModel('gpt-5-mini')
 
     app.listen(PORT, () => {
         echo(`✅ OpenAI-compatible API running at http://localhost:${PORT}/v1\n`)

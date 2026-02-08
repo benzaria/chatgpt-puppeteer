@@ -9,7 +9,7 @@ const config: Config = {
     env: {
       owner_name: 'Benzaria Achraf (Benz)',
       bot_name: 'benz.bot',
-      port: 18790,
+      port: 3000,
       timeout: '90'.s,
       model: 'gpt-5-mini',
       instruction(this, model = this.model) {
@@ -29,7 +29,8 @@ const config: Config = {
             - do not use markdown only plain text unless asked to
         `
       },
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userData: 'user_data',
     },
 }
 

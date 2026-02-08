@@ -1,0 +1,19 @@
+2026/02/08-04:06:10.063 2b8c Reusing MANIFEST C:\Users\benz\LLMs\chatgpt-puppeteer\__user_data\Default\Local Storage\leveldb/MANIFEST-000001
+2026/02/08-04:06:10.111 2b8c Recovering log #190
+2026/02/08-04:06:10.117 2b8c Level-0 table #193: started
+2026/02/08-04:06:10.202 2b8c Level-0 table #193: 38271 bytes OK
+2026/02/08-04:06:10.208 2b8c Recovering log #192
+2026/02/08-04:06:10.241 2b8c Reusing old log C:\Users\benz\LLMs\chatgpt-puppeteer\__user_data\Default\Local Storage\leveldb/000192.log 
+2026/02/08-04:06:10.250 2b8c Delete type=0 #190
+2026/02/08-04:07:17.509 2b8c Level-0 table #195: started
+2026/02/08-04:07:17.533 2b8c Level-0 table #195: 51576 bytes OK
+2026/02/08-04:07:17.541 2b8c Delete type=0 #192
+2026/02/08-04:07:17.545 2b8c Compacting 4@0 + 1@1 files
+2026/02/08-04:07:17.594 2b8c Generated table #196@0: 24 keys, 51925 bytes
+2026/02/08-04:07:17.594 2b8c Compacted 4@0 + 1@1 files => 51925 bytes
+2026/02/08-04:07:17.636 2b8c compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/02/08-04:07:17.655 2b8c Delete type=2 #186
+2026/02/08-04:07:17.655 2b8c Delete type=2 #188
+2026/02/08-04:07:17.655 2b8c Delete type=2 #191
+2026/02/08-04:07:17.655 2b8c Delete type=2 #193
+2026/02/08-04:07:17.655 2b8c Delete type=2 #195

@@ -1,7 +1,7 @@
 import express from 'express'
 //@ts-ignore
 import bodyParser from 'body-parser'
-import { initPage, initModel, ask } from './bot.ts'
+import { initPage, chat } from './bot.ts'
 import { echo } from './helpers.ts'
 import config from './config.ts'
 
@@ -32,15 +32,13 @@ app.post('/v1/chat/completions', async (req, res) => {
   // 1. Extract the last user message
   const lastUserMessage = messages
     ?.filter((m: any) => m.role === 'user')
-    .pop()?.content.text || 'Hello'
+    .pop()?.content[0].text || 'Hello'
 
   echo(`[Request] -> ${lastUserMessage}`)
 
   try {
     // 2. Call your Puppeteer-based 'ask' function
-    const aiResponse = await ask({
-      question: lastUserMessage,
-    })
+    const aiResponse = await chat(messages)
 
     // 3. Handle Streaming (OpenClaw often requests streams)
     // If stream is true, we send a single chunk then [DONE] to satisfy the client
@@ -100,7 +98,6 @@ if (import.meta.main) {
   (async () => {
     try {
       await initPage({ headless: 'new', temp: false })
-      await initModel('gpt-5-mini')
 
       app.listen(PORT, () => {
         echo(`✅ OpenAI-compatible API running at http://localhost:${PORT}/v1`)

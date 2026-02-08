@@ -120,6 +120,41 @@ async function ask(q: Query) {
   return responseText
 }
 
+async function chat(q: JSON) {
+  if (!globalThis.page) return echo.err("Page not initialized. Call `initPage` first.")
+
+  const promptText = JSON.stringify(q)
+
+  await page.evaluate((text: string, selector: string) => {
+    const textarea = document.querySelector(selector) as HTMLTextAreaElement
+    if (textarea) {
+      textarea.innerHTML = text
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+  }, promptText, selector.request)
+
+  await delay(500)
+  await page.click(selector.sendBtn)
+
+  echo.inf('Waiting for AI response...' + prvLine)
+  await page.waitForSelector(selector.voiceBtn, { visible: true, timeout: env.timeout })
+
+  const responseText = await page.evaluate((selector) => {
+    const messages = document.querySelectorAll(selector)
+    const lastMessage = messages[messages.length - 1] as HTMLElement
+    return lastMessage ? lastMessage.innerText : 'Could not find response.'
+  }, selector.response)
+
+  echo.inf(
+    clrLine +
+    '\n--- Captured Response ---\n' +
+    responseText +
+    '\n-------------------------\n'
+  )
+
+  return responseText
+}
+
 // This ensures it only runs if called directly
 if (import.meta.main) {
   // Execution logic
@@ -143,4 +178,5 @@ export {
   initPage,
   initModel,
   ask,
+  chat,
 }

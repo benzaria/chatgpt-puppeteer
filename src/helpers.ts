@@ -1,41 +1,33 @@
-import '@benzn/to-ms/extender'
+import { setTimeout } from 'node:timers/promises'
 import config from './config.ts'
 
-const isBrowser = globalThis.window?.document !== undefined
-const delay = (ms: number = '2'.s) => new Promise<void>(res => setTimeout(res, ms))
-const voidFn = () => { }
+const delay = setTimeout
+const colors = (id: number | string, str: string) => `\x1b[${id}m${str}\x1b[0m`
+const ansi256 = (id: number | string, str: string) => colors(`38;5;${id}`, str)
+const voidFn: VoidFn = (...args: any[]) => {}
 
-const echoMap = {
-  inf: [94, console.log],
-  wrn: [93, console.warn],
-  err: [91, console.error],
-  trw: [35, (...args: any[]) => {
-    throw new Error(...args)
-  }]
+const echoObj = {
+    inf: [94, 'INFO'],
+    wrn: [93, 'WARN'],
+    err: [91, 'ERROR'],
+    suc: [32, 'SUCCESS'],
+    unk: [35, 'UNKNOWN'],
 } as const
 
-const echo = new Proxy(
-  voidFn as {
-    (...args: any[]): void
-    inf(...args: any[]): void
-    wrn(...args: any[]): void
-    err(...args: any[]): void
-    trw(msg?: string, opt?: ErrorOptions): never
-  },
-  {
-    apply: (fn, _this, args) => console.log(...args),
+type EchoObj = typeof echoObj
+type EchoObjProp = keyof EchoObj
+type EchoMap = EchoObj[EchoObjProp]
+type Echo = {(...args: any[]): void} & Simplify<Record<EchoObjProp, VoidFn>>
 
-    get(fn, prop: keyof typeof echoMap) {
-      const [color, method] = echoMap[prop]
-      console.log('from echo')
-      return prop in echoMap
-        ? (...args: any[]) =>
-          method(...(isBrowser ? args : args.map(
-            arg => ['string', 'number'].includes(typeof arg)
-              ? `\x1b[${color}m${arg}\x1b[0m`
-              : arg
-          )))
-        : fn
+const echo = new Proxy(
+  console.log as Echo,
+  {
+    apply: (fn, _this, args) => fn(...args),
+
+    get(fn, prop: EchoObjProp) {
+      const [id, str] = echoObj[prop] ?? echoObj.unk
+      return prop === 'inf' && !args.verbose ? voidFn
+        : (...args: any[]) => fn(`[${colors(`1;${id}`, str)}]`, ...args)
     },
   }
 )
@@ -66,6 +58,8 @@ const template = (q: Query, br: string = '<br>----------------------------------
 
 export {
   echo,
+  colors,
+  ansi256,
   delay,
   toHTML,
   template,

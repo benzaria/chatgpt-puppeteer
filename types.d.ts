@@ -4,6 +4,10 @@ import { Page } from "puppeteer";
 declare global {
     var page: Page
     var model: Model
+    var shutdown: () => void
+
+    type Simplify<T> = {[K in keyof T]: T[K]} & {}
+    type VoidFn = (...args: any[]) => void
 
     type Config = {
         selector: Record<string, string>

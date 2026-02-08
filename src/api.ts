@@ -6,7 +6,7 @@ import { echo } from './helpers.ts'
 import config from './config.ts'
 
 const app = express()
-const PORT = config.env.port
+const PORT = args.port
 
 app.use(bodyParser.json())
 
@@ -71,7 +71,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 // Start the browser first, then the server
 if (import.meta.main) {
   (async () => {
-    await initPage(false)
+    await initPage({headless: false})
     await initModel()
 
     app.listen(PORT, () => {

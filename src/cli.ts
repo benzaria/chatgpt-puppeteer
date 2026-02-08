@@ -2,6 +2,7 @@ import { stdin as input, stdout as output } from 'node:process'
 import * as readline from 'node:readline/promises'
 import { initPage, initModel, ask } from './bot.ts'
 import { echo } from './helpers.ts'
+// import './arguments.ts'
 
 const rl = readline.createInterface({ input, output })
 
@@ -12,7 +13,6 @@ async function collectMultiline(prompt: string): Promise<string> {
   while (true) {
     const line = await rl.question('')
     if (line.trim() === "") break
-    if (line.toLowerCase() === 'exit') return 'exit'
     lines.push(line)
   }
   
@@ -20,26 +20,25 @@ async function collectMultiline(prompt: string): Promise<string> {
 }
 
 async function startCli() {
-  await initPage(true, false)
-  await initModel('gpt-5.2-instant')
+  await initPage({
+    headless: args.headless,
+    temp: args.temp
+  })
+  await initModel(args.model/* 'gpt-5.2-instant' */)
   
-  echo('\nBot Ready! Type your prompt below (or "exit" to quit):\n')
+  echo.inf('Bot Ready! Type your prompt below (or "exit" to quit):\n')
 
   while (true) {
-    const userInput = await collectMultiline('--- Question ---')
-    const userContext = await collectMultiline('--- Context ---')
+    const userInput = (await collectMultiline('--- Question ---')).trim()
+    const userContext = (await collectMultiline('--- Context ---')).trim()
 
-    if (userInput.toLowerCase() === 'exit') {
-      echo('Closing session...')
-      break
-    }
-
-    if (!userInput.trim()) continue
+    if (userInput.toLowerCase() === 'exit') break
+    if (!userInput) continue
 
     try {
       await ask({
         question: userInput,
-        context: userContext.trim()
+        context: userContext,
       })
     } catch (err) {
       echo.err('Error during ask:', err)
@@ -47,7 +46,7 @@ async function startCli() {
   }
 
   rl.close()
-  process.exit(0)
+  shutdown()
 }
 
 startCli()

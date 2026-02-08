@@ -1,74 +1,93 @@
+import '@benzn/to-ms/extender'
+import './arguments.ts'
+
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
-import { setTimeout } from 'node:timers/promises'
-import { template, echo } from './helpers.ts'
+import { template, echo, delay } from './helpers.ts'
 import config from './config.ts'
 
 const { selector, env } = config
 
-async function initPage(headless: boolean | 'new' = 'new', temp: boolean = false) {
+async function initPage({
+  headless = 'new', 
+  temp = false
+}: {
+  headless?: boolean | `${boolean}` | 'new';
+  temp?: boolean;
+} = {}) {
   puppeteer.use(StealthPlugin())
+  const isHeadless = headless === 'true' ? true : headless === 'false' ? false : headless
 
-  echo('Initializing Puppeteer...')
+  echo.inf('Initializing Puppeteer...' + prvLine)
   const browser = await puppeteer.launch({
-    headless: headless as any,
+    headless: isHeadless as any,
     userDataDir: './__user_data',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
 
   // --- TAB MANAGEMENT ---
-  const pages = await browser.pages()
-  
-  // Use the existing first page instead of closing it and making a new one
-  globalThis.page = pages.length > 0 ? pages[0] : await browser.newPage()
-
-  // Close any additional pages that might have opened (like popups)
-  for (let i = 1; i < pages.length; i++) {
-    await pages[i].close()
-  }
-
+  globalThis.page = await browser.newPage()
   await page.setUserAgent(env.userAgent)
-
-  // Auto-close any new popups that try to open later
+  
   browser.on('targetcreated', async (target) => {
     if (target.type() === 'page') {
       const newPage = await target.page()
       await newPage?.close()
     }
   })
+  echo.suc('Puppeteer ready.' + clrLine)
 
   try {
-    echo('Loading ChatGPT...')
+    echo.inf('Loading ChatGPT...' + prvLine)
     await page.goto(
       `https://chatgpt.com/${temp ? '?temporary-chat=true': ''}`,
       { waitUntil: 'networkidle2', timeout: env.timeout }
     )
 
-    // Check if we are stuck on a login or splash screen
     await page.bringToFront()
     await page.waitForSelector(selector.request, { timeout: env.timeout })
-    echo('Page ready.') 
+    echo.suc('ChatGPT ready.' + clrLine) 
+
   } catch (error) {
-    echo.err('Initialization failed:', error)
+    echo.err('Puppeteer initialization failed:', error)
+  } finally {
+    // --- CLEANUP LOGIC ---
+    browser.pages()
+      .then(pages => pages.forEach(page =>  page !== globalThis.page ? page.close() : null))
+      .catch(echo.err)
+
+    globalThis.shutdown = async () => {
+      echo.inf('Closing session...')
+      await browser.close()
+      process.exit()
+    }
+
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
+    process.on('uncaughtException', shutdown)
   }
 }
 
 async function initModel(model: Model = env.model) {
-  echo('Initializing Model...')
+  echo.inf('Initializing Model...' + prvLine)
   globalThis.model = model
 
-  const res = await ask({
-    model, question: 'responde with "OK" if undestood'
-  })
+  const verbose = args.verbose
+  args.verbose = false
+  const res = await ask({model, question: 'responde with "OK" if undestood'})
+  args.verbose = verbose
 
-  if (res?.toLowerCase()?.includes('ok')) echo("Model ready.")
+  if (res?.toLowerCase()?.includes('ok'))
+    echo.suc("Model ready." + clrLine)
+  else
+    echo.wrn('Model initialization failed:' + clrLine, res)
 }
 
 async function ask(q: Query) {
-  if (!page) return echo.err("Page not initialized. Call initPage first.")
-  if (!model) echo.wrn("model not initialized. Call initModel first.")
+  if (!globalThis.page) return echo.err("Page not initialized. Call `initPage` first.")
+  if (!globalThis.model) echo.wrn("model not initialized. Call `initModel` first.")
 
-  echo(`\nquestion: ${q.question}${q.context ? '\ncontext: ' + q.context : '' }\n`)
+  echo.inf(`\nquestion: ${q.question}${q.context ? '\ncontext: ' + q.context : '' }\n`)
   const promptText = template(q)
 
   await page.evaluate((text: string, selector: string) => {
@@ -79,12 +98,10 @@ async function ask(q: Query) {
     }
   }, promptText ?? '', selector.request)
 
-  // Small delay to let the UI register the text
-  await setTimeout(500)
+  await delay(500)
   await page.click(selector.sendBtn)
 
-  echo("Waiting for AI response...")
-
+  echo.inf('Waiting for AI response...' + prvLine)
   await page.waitForSelector(selector.voiceBtn, { visible: true, timeout: env.timeout })
 
   const responseText = await page.evaluate((selector) => {
@@ -93,9 +110,12 @@ async function ask(q: Query) {
     return lastMessage ? lastMessage.innerText : 'Could not find response.'
   }, selector.response)
 
-  echo('\n--- Captured Response ---')
-  echo(responseText)
-  echo('-------------------------\n')
+  echo.inf(
+    clrLine +
+    '\n--- Captured Response ---\n' +
+    responseText +
+    '\n-------------------------\n'
+  )
 
   return responseText
 }
@@ -104,7 +124,10 @@ async function ask(q: Query) {
 if (import.meta.main) {
   // Execution logic
   (async () => {
-    await initPage(false, false)
+    await initPage({
+      headless: 'new',
+      temp: false
+    })
     await initModel('gpt-5-mini')
 
     await ask({
@@ -112,7 +135,7 @@ if (import.meta.main) {
       context: ``
     })
 
-    process.exit(0)
+    process.exit()
   })()
 }
 

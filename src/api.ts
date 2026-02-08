@@ -32,7 +32,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   // 1. Extract the last user message
   const lastUserMessage = messages
     ?.filter((m: any) => m.role === 'user')
-    .pop()?.content || 'Hello'
+    .pop()?.content.text || 'Hello'
 
   echo(`[Request] -> ${lastUserMessage}`)
 

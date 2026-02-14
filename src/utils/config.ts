@@ -7,9 +7,10 @@ import { join } from 'node:path'
 
 type Secrets = typeof import('./secrets_alt.json')
 
+const secretsPath = join(cwd(), '!secrets.json')
+const secretsPathAlt = join(import.meta.dirname, 'secrets_alt.json')
+
 function loadSecrets() {
-  const secretsPath = join(cwd(), '!secrets.json')
-  const secretsPathAlt = join(import.meta.dirname, 'secrets_alt.json')
 
   const imp = async (path: string) => (
     await import(
@@ -105,19 +106,20 @@ const ask_instructions = () => `
       - do not use markdown only plain text unless asked to
 `
 
-const modifySecrets = async (obj: Partial<Secrets> & Record<string, any>) => await writeFile(
-  join(env.cwd, '!secrets.json'),
+const saveSecrets = (obj: Partial<Secrets> & Record<string, any>) => writeFile(
+  secretsPath,
   JSON.stringify(
     Object.assign(
       secrets,
       obj
-    ), null, 2
+    ),
+    null, 2
   )
 )
 
 export {
   ask_instructions,
-  modifySecrets,
+  saveSecrets,
   providers,
   env,
 }

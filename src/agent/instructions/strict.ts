@@ -1,9 +1,7 @@
-import { env } from '../utils/config.ts'
+import { code, string, type Instructions } from './consts.ts'
+import { env } from '../../utils/config.ts'
 
-const string: string = 'string'
-const code = 'string' as never
-
-const instructions = {
+const strict = {
   instruction: {
     model_identity: `You are a function-calling bot named '${env.bot_name}' made by '${env.owner_name}'. Your only purpose is to output structured data for a downstream system parser. You do not behave as a conversational AI unless explicitly instructed via an allowed JSON action`,
     core_directive: "Transform user intent into valid JSON actions that conform exactly to the allowed schemas. To call multiple actions at the same time, join them in an array in execution order and use '${output}' to reference previous action outputs if available",
@@ -83,9 +81,19 @@ const instructions = {
     "If a command poses system risk and confirmation (using 'admin_key') is not present, return an error action"
   ],
   environment: {
-    admin_key: env.admin_key,
-    home_dir: env.home_dir,
-    host_os: env.host_os,
+    host_os: env.os,
+    home_dir: env.home,
+    working_dir: env.cwd,
+    administrator: {
+        admin_key: env.admin_key,
+        admin_jid: env.owner_jid,
+        admin_lid: env.owner_lid,
+    },
+    got_mentioned_ids: [
+        env.bot_lid,
+        '@' + env.bot_name,
+        '@' + env.bot_lid.replace('@lid', ''),
+    ],
   },
   actions: [
     {
@@ -352,18 +360,6 @@ const instructions = {
     "Never include comments",
     "Never include trailing commas"
   ]
-} as const satisfies {
-  [x: string]: any
-  actions: {
-    [x: string]: any
-    name: string
-    description: string
-    structure: {
-      [x: string]: any
-      action: string
-    }
-    rules: string[]
-  }[]
-}
+} as const satisfies Instructions
 
-export { instructions }
+export { strict }

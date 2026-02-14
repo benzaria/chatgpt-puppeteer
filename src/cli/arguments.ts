@@ -32,12 +32,18 @@ const options = {
     type: 'boolean',
     default: false,
   },
+  
+  'best-conv': {
+    short: 'b',
+    type: 'boolean',
+    default: false,
+  },
 
-	verbose: {
-		short: 'v',
-		type: 'boolean',
-		default: false,
-	},
+  verbose: {
+    short: 'v',
+    type: 'boolean',
+    default: false,
+  },
 
   port: {
     short: 'p',

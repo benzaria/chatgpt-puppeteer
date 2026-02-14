@@ -1,9 +1,9 @@
 import '../cli/arguments.ts'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
-import { providers, env, modifySecrets } from '../utils/config.ts'
+import { providers, env, saveSecrets } from '../utils/config.ts'
 import { template, echo, delay } from '../utils/helpers.ts'
-import { instructions } from '../agent/instructions.ts'
+import { main } from '../agent/instructions.ts'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -38,7 +38,7 @@ async function initPage(headless: boolean | 'new' = 'new') {
   await page.setRequestInterception(true)
 
   page.on('request', req => {
-    if (['image','font','media', args.headless ? 'stylesheet' : null].includes(req.resourceType()))
+    if (['image','font','media', args.headless && 'stylesheet'].includes(req.resourceType()))
       req.abort()
     else
       req.continue()
@@ -63,7 +63,11 @@ async function initProvider(model: Models) {
 
     await page.bringToFront()
     await page.goto(
-      providers[provider]['api'] + (!args['new-conv'] && env.conversation ? `c/${env.conversation}` : ''),
+      providers[provider]['api'] + (
+        args['new-conv'] ? '' :
+        args['best-conv'] && env.best_conversation ? `c/${env.best_conversation}` :
+        env.conversation ? `c/${env.conversation}` : ''
+      ),
       { waitUntil: 'domcontentloaded', timeout: env.timeout }
     )
     await page.addStyleTag({
@@ -112,7 +116,7 @@ async function initModel(instructions: object) {
   const conversation = page.url().split('/c/')[1]
   echo.inf('Conversation UUID:', conversation)
  
-  modifySecrets({ conversation })
+  saveSecrets({ conversation })
 }
 
 async function ask(q: Query) {
@@ -199,7 +203,7 @@ const initPrblm = (step: 'Page' | 'Provider' | 'Model', level: 'err' | 'wrn') =>
 async function initBot() {
   await initPage(args.headless)
   await initProvider(args.model)
-  await initModel(instructions)
+  await initModel(main)
 }
 
 // This ensures it only runs if called directly

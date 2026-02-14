@@ -2,6 +2,9 @@
 __*
 \!*
 
+agent-*/
+
 node_modules/
 user_data/
+ws_data/
 

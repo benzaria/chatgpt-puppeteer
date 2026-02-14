@@ -1,8 +1,8 @@
 {
-  "name": "chatgpt-puppeteer",
+  "name": "ai-agent",
   "version": "2.0.0",
   "description": "AI Agent",
-  "main": "main.ts",
+  "main": "src/agent/main.ts",
   "type": "module",
   "scripts": {
     "start": "node .",
@@ -12,7 +12,8 @@
     "start:api": "node ./src/model/api.ts",
     "test:bot": "node ./src/model/bot.ts",
     "test:channel:ws": "node ./src/channels/whatsapp/ws.ts",
-    "test:channel:tl": "node ./src/channels/telegram/tl.ts"
+    "test:channel:tl": "node ./src/channels/telegram/tl.ts",
+    "push": "pwsh -nop \"scripts/publish.ps1\""
   },
   "keywords": [],
   "author": "benzaria",

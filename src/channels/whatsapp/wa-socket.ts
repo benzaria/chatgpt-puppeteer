@@ -23,11 +23,11 @@ type CreateSocketOpts = {
   onQr?: (qr: string) => void
   logger?: 'none' | 'silent' | 'info' | 'debug'
 }
-type WS = Awaited<ReturnType<typeof createWASocket>>
+type WS = ReturnType<typeof makeWASocket> & { send: WS['sendMessage'] }
 type ReconnectFn = (opts: CreateSocketOpts) => Promise<WS>
 
-const getQR = lazy(() => import('qrcode-terminal'))
-const getPino = lazy(() => import('pino'))
+const getQR = lazy(async () => (await import('qrcode-terminal')).default)
+const getPino = lazy(async () => (await import('pino')).default)
 
 const qsaveCreds = queue(async (saveCreds: AsyncFn) => {
   echo.inf('Save creds')
@@ -75,7 +75,7 @@ async function createWASocket(
       trace: voidFn, debug: voidFn, info: voidFn,
       warn: voidFn, error: voidFn, fatal: voidFn,
     }
-    : (await getPino()).default({ level: opts.logger ?? 'info' })
+    : (await getPino())({ level: opts.logger ?? 'info' })
 
   await restoreCredsIfCorrupted(authDir)
   const { state, saveCreds } = await useMultiFileAuthState(authDir)
@@ -147,9 +147,13 @@ async function createWASocket(
     echo.err('WASocket error:', err.message)
   })
 
-  return sock
-}
+  ;(sock as WS).send = function (...args: Parameters<WS['sendMessage']>) {
+    return sock.sendMessage(...args)
+      .finally(() => global.typing = 0)
+  }
 
+  return sock as WS
+}
 
 export {
   createWASocket,

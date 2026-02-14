@@ -13,17 +13,15 @@ import {
   type WAMessage,
 } from 'baileys'
 
+import { reply as auto_reply } from '../../agent/actions/actions.ts'
 import { echo, queue } from '../../utils/helpers.ts'
 import { parser } from '../../agent/interaction.ts'
-import { reply } from '../../agent/actions.ts'
 import { env } from '../../utils/config.ts'
 import { chat } from '../../model/bot.ts'
 import { inspect } from 'node:util'
 
 type MsgData = Prettify<
-  & {
-    msg: WAMessage
-  }
+  & { msg: WAMessage }
   & {
     uJid: string
     gJid?: string
@@ -31,8 +29,6 @@ type MsgData = Prettify<
     mentions: string[]
   }
 >
-
-const qchat = queue(chat)
 
 async function initWASocket(
   opts?: CreateSocketOpts | null,
@@ -72,7 +68,7 @@ function initListeners(ws: WS = global.ws) {
       // Get message uJid
       const uJid = jidNormalizedUser(msg.key.remoteJidAlt || msg.key.remoteJid!)
       const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || []
-      const request = msg.message?.conversation || msg.message?.extendedTextMessage?.text || ''
+      const request = msg.message?.conversation || msg.message?.extendedTextMessage?.text || 'NEVER'
 
       const isp = args.verbose && inspect(msg,
         {
@@ -110,7 +106,7 @@ function initListeners(ws: WS = global.ws) {
 
 async function userHandler(data: MsgData) {
 
-  await makeReply(data)
+  await reply(data)
 }
 
 async function groupHandler(data: MsgData) {
@@ -121,32 +117,60 @@ async function groupHandler(data: MsgData) {
     uJid: jidNormalizedUser(data.msg.key?.participant || data.msg.key?.participantAlt),
   }
 
-  await makeReply(_data)
+  await reply(_data)
 }
 
-async function makeReply(data: MsgData) {
-  const { uJid, gJid, msg: { key }, request, mentions } = data
+// const qchat = queue(chat)
 
-  // Seen and typing
-  ws.readMessages([key!])
-    .then(() => ws.sendPresenceUpdate('composing', uJid))
+const reply = queue(
+  async function (data: MsgData) {
+    const { uJid, gJid, msg: { key, message }, request, mentions } = data
+    const quoted = message?.extendedTextMessage?.contextInfo?.quotedMessage ?? undefined
 
-  // Handle ping/pong
-  if (request.toLowerCase() === 'ping'){
-    reply({ uJid }, 'pong 🏓')
-  }
-  else {
-   const response = await qchat({
-    request,
-    chat: gJid,
-    from: uJid,
-    mentions,
-   })
-   
+    // Read and typing
+    ws.readMessages([key!])
+    const typing = startTyping(uJid)
+
+    // Handle ping/pong
+    if (request.toLowerCase() === 'ping') {
+      auto_reply({ uJid }, 'pong 🏓')
+      return
+    }
+    
+    // Handle chat and parser
+    const response = await chat({
+      request,
+      chat: gJid,
+      from: uJid,
+      mentions,
+      quoted,
+    })
+    
     parser({ ...data, response })
-      .finally(() => ws.sendPresenceUpdate('paused', uJid))
+      .finally(typing.stop)
   }
+)
 
+function startTyping(jid: string, delay = 500, timeout = 5000) {
+  const fn = () => {
+    echo.inf('typing')
+    ws.sendPresenceUpdate('composing', jid)
+    global.typing = timeout
+  }
+  
+  const id = setInterval(() => {
+    if (global.typing <= 0 || !global.typing) fn()
+    global.typing -= delay
+  }, delay)
+
+  return {
+    stop() {
+      clearInterval(id)
+      global.typing = 0
+      echo.inf('stoped')
+      // ws.sendPresenceUpdate('paused', jid)
+    }
+  }
 }
 
 export {

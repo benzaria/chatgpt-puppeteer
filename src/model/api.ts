@@ -1,5 +1,5 @@
 import { initPage, initModel, chat, initProvider } from './bot.ts'
-import { instructions } from '../agent/instructions.ts'
+import { main } from '../agent/instructions.ts'
 import { echo } from '../utils/helpers.ts'
 
 //@ts-ignore
@@ -31,7 +31,7 @@ async function startAPI() {
   try {
     await initPage(args.headless)
     await initProvider('openai/gpt-5-mini')
-    await initModel(instructions)
+    await initModel(main)
 
     app.listen(PORT, () => {
       echo(`✅ OpenAI-compatible API running at http://localhost:${PORT}`)

@@ -208,7 +208,7 @@ const main = {
     },
     {
       name: "read",
-      description: "Read file",
+      description: "Read file or directory",
       returns_result: true,
       structure: {
         action: "read",
@@ -216,44 +216,86 @@ const main = {
       },
       rules: [
         "Infer path if contextually obvious",
-        "Fallback search: ~/agent-files/"
+        "Fallback path: ~/agent-files/"
       ]
     },
     {
       name: "write",
-      description: "Write file",
+      description: "Write a file",
       structure: {
         action: "write",
         path: string,
         content: string
       },
       rules: [
-        "Generate filenames if missing, prefix with 'w_'",
+        "Generate filenames if missing, prefix with 'wr_'",
         "Fallback path: ~/agent-files/",
         "No truncation"
       ]
     },
+
     {
-      name: "move",
-      description: "Move/Rename file",
+      name: "copy",
+      description: "Copy a file or directory",
       structure: {
-        action: "move",
-        old_path: string,
-        new_path: string
+        action: "copy",
+        from: string,
+        to: string
       },
       rules: [
+        "Generate filenames if missing, prefix with 'cp_'",
+        "Infer path when possible"
+      ]
+    },
+    {
+      name: "move",
+      description: "Move/Rename a file or directory",
+      structure: {
+        action: "move",
+        from: string,
+        to: string
+      },
+      rules: [
+        "Generate filenames if missing, prefix with 'mv_'",
         "Infer path when possible"
       ]
     },
     {
       name: "delete",
-      description: "Delete file",
+      description: "Delete a file or directory",
       structure: {
         action: "delete",
         path: string
       },
       rules: [
+        "Generate filenames if missing, prefix with 'rm_'",
         "Infer path when safely deducible"
+      ]
+    },
+    {
+      name: "exists",
+      description: "Check existence of a file or directory in a path using keywords",
+      returns_result: true,
+      structure: {
+        action: "exists",
+        path: string,
+        keywords: stringArr
+      },
+      rules: [
+        "Keywords are ideas of what the file name could be made of",
+        "Infer path when deducible"
+      ]
+    },
+    {
+      name: "make_dir",
+      description: "Make a directory",
+      structure: {
+        action: "make_dir",
+        path: string
+      },
+      rules: [
+        "Generate filenames if missing, prefix with 'md_'",
+        "Infer path when possible"
       ]
     },
     {
@@ -265,7 +307,7 @@ const main = {
         path: string
       },
       rules: [
-        "Generate filenames if missing, prefix with 'd_'",
+        "Generate filenames if missing, prefix with 'dn_'",
         "Fallback path: ~/agent-files/"
       ]
     },
@@ -282,7 +324,9 @@ const main = {
         "tar",
         "gz"
       ],
-      rules: []
+      rules: [
+        "Generate filenames if missing, prefix with 'cx_'",
+      ]
     },
     {
       name: "decompress",
@@ -292,7 +336,9 @@ const main = {
         path: string,
         destination: string
       },
-      rules: []
+      rules: [
+        "Generate filenames if missing, prefix with 'dx_'",
+      ]
     },
     {
       name: "web_search",

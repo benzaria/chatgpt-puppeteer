@@ -1,5 +1,4 @@
 onlyBuiltDependencies:
-  - '@whiskeysockets/baileys'
   - baileys
   - protobufjs
   - puppeteer

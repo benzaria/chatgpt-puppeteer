@@ -19,9 +19,9 @@ async function collectPrompt(prompt: string): Promise<string> {
 }
 
 async function startCLI(callback?: (...args: any[]) => any) {
-  // await initPage(args.headless)
-  // await initProvider(args.model)
-  // await initModel(instructions)
+  //- await initPage(args.headless)
+  //- await initProvider(args.model)
+  //- await initModel(instructions)
   await initBot()
 
   echo.inf('\nBot Ready! Type your prompt below (or "exit" to quit):')

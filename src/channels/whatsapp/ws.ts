@@ -14,7 +14,7 @@ import {
 } from 'baileys'
 
 import { reply as auto_reply } from '../../agent/actions/actions.ts'
-import { echo, queue } from '../../utils/helpers.ts'
+import { echo, queue, delay } from '../../utils/helpers.ts'
 import { parser } from '../../agent/interaction.ts'
 import { env } from '../../utils/config.ts'
 import { chat } from '../../model/bot.ts'
@@ -127,9 +127,8 @@ const reply = queue(
     const { uJid, gJid, msg: { key, message }, request, mentions } = data
     const quoted = message?.extendedTextMessage?.contextInfo?.quotedMessage ?? undefined
 
-    // Read and typing
+    // Mark as Read
     ws.readMessages([key!])
-    const typing = startTyping(uJid)
 
     // Handle ping/pong
     if (request.toLowerCase() === 'ping') {
@@ -137,6 +136,9 @@ const reply = queue(
       return
     }
     
+    // Mark as Typing
+    const typing = startTyping(uJid)
+
     // Handle chat and parser
     const response = await chat({
       request,
@@ -151,26 +153,28 @@ const reply = queue(
   }
 )
 
-function startTyping(jid: string, delay = 500, timeout = 5000) {
-  const fn = () => {
+function startTyping(jid: string, interval = 500, timeout = 5000) {
+  const start = () => {
     echo.inf('typing')
     ws.sendPresenceUpdate('composing', jid)
     global.typing = timeout
   }
   
-  const id = setInterval(() => {
-    if (global.typing <= 0 || !global.typing) fn()
-    global.typing -= delay
-  }, delay)
-
-  return {
-    stop() {
-      clearInterval(id)
-      global.typing = 0
-      echo.inf('stoped')
-      // ws.sendPresenceUpdate('paused', jid)
-    }
+  const stop = () => {
+    clearInterval(id)
+    global.typing = 0
+    echo.inf('stoped')
+    // ws.sendPresenceUpdate('paused', jid)
   }
+
+  const id = setInterval(() => {
+    if (global.typing <= 0 || !global.typing) start()
+    global.typing -= interval
+  }, interval)
+
+  delay(20_000, stop)
+
+  return { stop }
 }
 
 export {
@@ -185,3 +189,4 @@ export type {
 
 export * from 'baileys'
 export * from './wa-socket.ts'
+

@@ -14,9 +14,6 @@ declare global {
   >
 
   const __args: string[]
-  const isBrowser: boolean
-  const prvLine: string
-  const clrLine: string
 }
 
 const options = {
@@ -28,13 +25,13 @@ const options = {
   },
 
   'new-conv': {
-    short: 'c',
+//  short: 'nc',
     type: 'boolean',
     default: false,
   },
   
   'best-conv': {
-    short: 'b',
+//  short: 'bc',
     type: 'boolean',
     default: false,
   },
@@ -59,7 +56,20 @@ const options = {
 
 } as const satisfies ParseArgsOptionsConfig
 
-const { values, positionals } = parseArgs({ options, allowPositionals: true })
+const multiShortMap = {
+  '-nc': '--new-conv',
+  '-bc': '--best-conv',
+} as const satisfies Record<`-${string}`, `--${string}`>
+
+const preParseArgv = (argv: string[]) => argv.map(
+  arg => (multiShortMap as any)[arg] ?? arg
+)
+
+const { values, positionals } = parseArgs({
+  args: preParseArgv(process.argv.slice(2)),
+  allowPositionals: true,
+  options,
+})
 
 const _args: typeof args = {...values as any}
 delete (_args as any)['headed']

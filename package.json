@@ -1,24 +1,44 @@
 {
   "name": "ai-agent",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "AI Agent",
   "main": "src/agent/main.ts",
+  "bin": "src/cli/chat_tui.ts",
   "type": "module",
   "scripts": {
+    "push": "pwsh -nop \"scripts/publish.ps1\"",
+    "prepush": "pnpm check-all",
     "start": "node .",
-    "test": "pwsh -nop \"scripts/run.ps1\" -dir test -file",
     "start:agent": "node ./src/agent/main.ts",
-    "start:chat": "node ./src/cli/chat.ts",
+    "start:chat": "node ./src/cli/chat_tui.ts",
     "start:api": "node ./src/model/api.ts",
+    "test": "pwsh -nop \"scripts/run.ps1\" -dir test -file",
     "test:bot": "node ./src/model/bot.ts",
     "test:channel:ws": "node ./src/channels/whatsapp/ws.ts",
     "test:channel:tl": "node ./src/channels/telegram/tl.ts",
-    "push": "pwsh -nop \"scripts/publish.ps1\""
+    "check-all": "pnpm type-check && pnpm lint-check",
+    "type-check": "tsc --noEmit",
+    "lint-check": "eslint ./src",
+    "compile": "tsc",
+    "lint": "eslint ./src --fix"
   },
-  "keywords": [],
+  "keywords": ["ai", "agent"],
   "author": "benzaria",
   "license": "MIT",
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "engineStrict": true,
+  "devEngines": {
+    "runtime": [
+      {
+        "name": "node",
+        "version": ">=22",
+        "onFail": "warn"
+      }
+    ]
+  },
   "dependencies": {
     "baileys": "7.0.0-rc.9",
     "body-parser": "^2.2.2",

@@ -1,5 +1,5 @@
 import { type MsgData, jidNormalizedUser } from '../../channels/whatsapp/ws.ts'
-import { type Instructions } from '../instructions.ts'
+import { type Instructions } from '../instructions/consts.ts'
 import { parser, runAction } from '../interaction.ts'
 import { echo } from '../../utils/helpers.ts'
 import { chat } from '../../model/bot.ts'
@@ -211,7 +211,7 @@ const actions = {
     reply(this, `*[WEB SEARCH]*\n${result}`)
   },
 
-} as const satisfies Partial<Actions & {none: VoidFn}>
+} as const satisfies Actions & {none: VoidFn}
 
 
 export {

@@ -8,18 +8,23 @@
 	"scripts": {
 		"prepush": "pnpm run-checks",
 		"push": "pnpm push:skip-check",
-		"push:skip-check": "pwsh -nop \"scripts/publish.ps1\"",
+		"push:skip-check": "pwsh -nop 'scripts/publish.ps1'",
+
 		"start": "node .",
 		"start:agent": "node ./src/agent/main.ts",
+		"start:agent:tui": "node ./src/cli/agent_tui.ts",
 		"start:chat": "node ./src/cli/chat_tui.ts",
 		"start:api": "node ./src/model/api.ts",
-		"test": "pwsh -nop \"scripts/run.ps1\" -dir test -file",
+
+		"test": "pwsh -nop 'scripts/run.ps1' -dir test -file",
 		"test:bot": "node ./src/model/bot.ts",
 		"test:channel:ws": "node ./src/channels/whatsapp/ws.ts",
 		"test:channel:tl": "node ./src/channels/telegram/tl.ts",
+
 		"run-checks": "pnpm type-check && pnpm lint-check",
 		"lint-check": "eslint",
 		"type-check": "tsc --noEmit",
+
 		"lint": "eslint --fix",
 		"compile": "tsc"
 	},

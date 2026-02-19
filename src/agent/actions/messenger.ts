@@ -1,6 +1,6 @@
-import { jidNormalizedUser } from '../../channels/whatsapp/ws.ts'
+import { getID } from '../../channels/whatsapp/ws.ts'
 import { reply, type PActions } from './consts.ts'
-import { echo } from '../../utils/tui.ts'
+import { Color, echo } from '../../utils/tui.ts'
 
 const messenger_actions = {
 
@@ -13,19 +13,17 @@ const messenger_actions = {
 			to, uJid, gJid,
 		} = this
 
-		const target = jidNormalizedUser(to)
-		const toMention = `@${target.split('@')[0]}`
-		const _mentions = [...mentions, target]
+		const target = `@${getID(to)}`
+		const _mentions = [...mentions ?? [], to]
 
-		echo.cst([32, action], { to, uJid, gJid, mentions }, '\n' + message)
+		echo.cst([Color.GREEN, action], { to, uJid, gJid, mentions }, '\n' + message)
 
-		if (![gJid, uJid].includes(target)) {
-			if (gJid) reply(this, `${platform} -> ${toMention}`, _mentions)
-			else reply(this, `${platform} -> ${toMention}\n${message}`, _mentions)
+		if (![gJid, uJid].includes(to)) {
+			if (gJid) reply(this, `${platform} -> ${target}`, _mentions)
+			else reply(this, `${platform} -> ${target}\n${message}`, _mentions)
 		}
 
-		return ws.send(
-			target,
+		return ws.send(to,
 			{
 				text: message,
 				mentions: _mentions,

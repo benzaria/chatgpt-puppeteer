@@ -1,8 +1,8 @@
 import { type MsgData } from '../../channels/whatsapp/ws.ts'
 import { parser, runAction } from '../interaction.ts'
 import * as instructions from '../instructions.ts'
+import { Color, echo } from '../../utils/tui.ts'
 import { env } from '../../utils/config.ts'
-import { echo } from '../../utils/tui.ts'
 import { chat } from '../../model/bot.ts'
 
 
@@ -51,9 +51,10 @@ const reply = (
 	text: string,
 	mentions: string[] = []
 ) => {
-	text = text.replaceAll(env.home, '~')
+	if (isCLI) return
 
-	echo.cst([32, 'reply'], { to: gJid ?? uJid, text })
+	text = text.replaceAll(env.home, '~')
+	echo.vrb([Color.GREEN, 'reply'], { to: gJid ?? uJid, text })
 
 	return ws.send(gJid ?? uJid, { text, mentions })
 }
@@ -92,8 +93,8 @@ const results = async (data: {
 
 export {
 	results,
-	error,
 	reply,
+	error,
 }
 
 export type {

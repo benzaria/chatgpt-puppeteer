@@ -22,11 +22,11 @@ function loadSecrets() {
 
 	try {
 		return imp(secretsPath)
-	} catch (err) {
+	} catch {
 		echo.wrn(`
 			Secrets are not setup at: "${secretsPath}"
       Loading default template: "${secretsPathAlt}"
-    `.replaceAll('\\', '/'), err)
+    `.replaceAll('\\', '/'))
 
 		return imp(secretsPathAlt)
 	}
@@ -118,7 +118,7 @@ const saveSecrets = (obj: Partial<Secrets> & Record<string, any>) => writeFile(
 		),
 		null, 2
 	)
-)
+).catch(echo.err)
 
 export {
 	ask_instructions,

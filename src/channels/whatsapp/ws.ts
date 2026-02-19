@@ -16,20 +16,24 @@ import {
 import { reply as auto_reply } from '../../agent/actions/consts.ts'
 import { queue, delay } from '../../utils/helpers.ts'
 import { parser } from '../../agent/interaction.ts'
+import { Color, echo } from '../../utils/tui.ts'
 import { env } from '../../utils/config.ts'
 import { chat } from '../../model/bot.ts'
-import { Color, echo } from '../../utils/tui.ts'
 import { inspect } from 'node:util'
 
 type MsgData = Prettify<
-  & { msg: WAMessage }
-  & {
-    uJid: string
-    gJid?: string
-    request: string
-    mentions: string[]
-  }
+	& HandlerData
+	& {
+		gJid?: string
+	}
 >
+
+type HandlerData = {
+	msg: WAMessage
+	uJid: string
+	request: string
+	mentions?: string[]
+}
 
 async function initWASocket(
 	opts?: CreateSocketOpts | null,
@@ -66,14 +70,16 @@ function initListeners(ws: WS = global.ws) {
 			// ignore bot messages and broadcasts
 			if (msg.key.fromMe || isJidBroadcast(msg.key.remoteJid!)) continue
 
+			const { message, key } = msg
+
 			// Get message uJid
-			const uJid = jidNormalizedUser(msg.key.remoteJidAlt || msg.key.remoteJid!)
-			const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || []
-			const request = msg.message?.conversation || msg.message?.extendedTextMessage?.text || 'undefined'
+			const uJid = jidNormalizedUser(key.remoteJidAlt || key.remoteJid!)
+			const request =  message?.conversation || message?.extendedTextMessage?.text || ''
+			const mentions = message?.extendedTextMessage?.contextInfo?.mentionedJid || undefined
 
 			const isp = args.verbose && inspect(msg,
 				{
-					depth: 5,
+					depth: null,
 					colors: true
 				}
 			)
@@ -82,20 +88,16 @@ function initListeners(ws: WS = global.ws) {
 				msg,
 				uJid,
 				request,
-				mentions,
+				mentions
 			}
 
-			if (isLidUser(uJid) || isPnUser(uJid)) {
-				echo.vrb([94, 'user'], isp)
-				userHandler(data)
+			if (isJidUser(uJid)) {
+				echo.vrb([Color.BG_GREEN, 'user'], isp)
+				userHandler.apply(data)
 			}
-			else if (isJidGroup(uJid) && (
-				mentions.length
-					? mentions.includes(env.agent_lid)
-					: request.includes(`@${env.agent_name}`)
-			)) {
-				echo.vrb([94, 'group'], isp)
-				groupHandler(data)
+			else if (isJidGroup(uJid)) {
+				echo.vrb([Color.BG_GREEN, 'group'], isp)
+				groupHandler.apply(data)
 			}
 
 		}
@@ -105,29 +107,38 @@ function initListeners(ws: WS = global.ws) {
 
 }
 
-async function userHandler(data: MsgData) {
+async function userHandler(this: HandlerData) {
+	// const { msg: { message } } = this
+
+	await reply(this)
+}
+
+async function groupHandler(this: HandlerData) {
+	const { uJid, msg: { key }, request, mentions } = this
+	const lRequest = request.toLowerCase()
+
+	if (!(
+		mentions?.includes(env.agent_lid) ||
+		lRequest.includes('@' + env.agent_name.toLowerCase()) ||
+		lRequest.includes('@' + getID(env.agent_lid)) ||
+		lRequest.includes('@' + getID(env.agent_jid))
+	)) return
+
+	const participant = jidNormalizedUser(key?.participant || key?.participantAlt)
+
+	const data = {
+		...this,
+		gJid: uJid,
+		uJid: participant,
+	}
 
 	await reply(data)
 }
 
-async function groupHandler(data: MsgData) {
-
-	const _data = {
-		...data,
-		gJid: data.uJid,
-		uJid: jidNormalizedUser(data.msg.key?.participant || data.msg.key?.participantAlt),
-	}
-
-	await reply(_data)
-}
-
-// const qchat = queue(chat)
-
 const reply = queue(
 	async function (data: MsgData) {
-		const { uJid, gJid, msg: { key, message }, request, mentions: ment } = data
-		const quoted = message?.extendedTextMessage?.contextInfo?.quotedMessage || undefined
-		const mentions = ment.length ? ment : undefined
+		const { uJid, gJid, msg: { key, message }, request, mentions } = data
+		const quoted = message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || undefined
 
 		// Mark as Read
 		ws.readMessages([key!])
@@ -155,7 +166,7 @@ const reply = queue(
 	}
 )
 
-function startTyping(jid: string, interval = 500, timeout = 5000) {
+function startTyping(jid: string, interval = '.5'.s, timeout = '5'.s) {
 
 	const start = () => {
 		ws.sendPresenceUpdate('composing', jid)
@@ -180,10 +191,14 @@ function startTyping(jid: string, interval = 500, timeout = 5000) {
 	return { stop }
 }
 
+const isJidUser = (jid?: string) => isLidUser(jid) || isPnUser(jid)
+const getID = (jid: string) => +jidNormalizedUser(jid).split('@')[0]
+
 export {
 	initListeners,
 	initWASocket,
 	connection,
+	getID,
 }
 
 export type {

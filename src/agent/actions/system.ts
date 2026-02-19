@@ -10,22 +10,24 @@ const system_actions = {
 
 	talk() {
 		const { action, text } = this
+
 		echo.cst.ln([Color.GREEN, action], '\n' + text)
 		reply(this, text)
 	},
 
-	shutdown() {
-		echo.cst([Color.RED, 'shutdown'])
-		reply(this, '*[SYSTEM]* `Shutdown`')
-			.then(shutdown)
+	async shutdown() {
+		const { action , reason } = this
+
+		echo.cst([Color.RED, action], reason)
+		await reply(this, `*[SYSTEM]* \`Shutdown\`\n${reason}`)
+		shutdown()
 	},
 
-	async restart() {
-		const { action } = this
+	restart() {
+		const { action, reason } = this
 
-		echo.cst.ln([33, action]
+		echo.cst.ln([33, action], reason)
 
-		)
 		try {
 			const cmd = process.argv.join(' ')
 
@@ -39,9 +41,9 @@ const system_actions = {
 
 			// child.unref()
 
-			child.on('spawn', () => {
-				reply(this, '*[SYSTEM]* `Restart`')
-					.then(shutdown)
+			child.on('spawn', async () => {
+				await reply(this, '*[SYSTEM]* `Restart`')
+				shutdown()
 			})
 
 		}
@@ -98,7 +100,38 @@ const system_actions = {
 			.catch(err => error(this, err))
 	},
 
-	auth_user() {}
+	auth_user() {},
+
+	contact() {
+		const { action, keywords } = this
+
+		echo.cst.ln([Color.GREEN, action], keywords)
+
+		const lKeywords: string[] = keywords
+			.map((key: string) => key.toLowerCase())
+
+		const result = Object.keys(global.contacts)
+			.filter(
+				contact => (
+					lKeywords.filter(
+						key => contact
+							.toLowerCase()
+							.includes(key),
+					)
+				).length
+			)
+
+		results(
+			{
+				...this,
+				result,
+				action_was: {
+					action,
+					keywords,
+				},
+			},
+		).catch(err => error(this, err))
+	},
 
 } as const satisfies PActions
 

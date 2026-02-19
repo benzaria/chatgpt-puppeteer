@@ -107,7 +107,7 @@ type EchoLevel = keyof EchoMap
 type EchoMap = typeof echoMap
 type EchoLvlc = 'cst' | 'vrb'
 
-type EchoTupleType = readonly [id: Color, str: string]
+type EchoTupleType = readonly [id: Color[] | Color, str: string]
 type EchoTuple =
 	| EchoTupleType
 	| EchoMap[EchoLevel]
@@ -197,7 +197,7 @@ const withLine = <T extends AnyFunction>(fn: T) => {
 
 	(Object.entries(withMap) as AnyArray).forEach(
 		([prop, str]: [WithProp, string]) => {
-			; (fn as any)[prop] = (...args: AnyArray) => fn(...args, str)
+			;(fn as any)[prop] = (...args: AnyArray) => fn(...args, str)
 		},
 	)
 
@@ -206,11 +206,11 @@ const withLine = <T extends AnyFunction>(fn: T) => {
 
 const echo = new Proxy(echoFn as Echo,
 	{
-		apply(_fn, _this, args) {
+		apply(_, __, args) {
 			_log(...args, `${Ansi.CSI}K`)
 		},
 
-		get(fn, prop: string) {
+		get(call, prop: string) {
 			if (echoCache.has(prop)) return echoCache.get(prop)
 
 			if (prop in withMap) {
@@ -220,11 +220,10 @@ const echo = new Proxy(echoFn as Echo,
 				return echoCache.set(prop, fn), fn
 			}
 
-			const level = echoLevel(prop)
-			const call = (...args: AnyArray) => fn(level, ...args)
+			const fn = (...args: AnyArray) => call(echoLevel(prop), ...args)
 
 			const fnc = (level: EchoLevel | EchoTuple, ...args: AnyArray) =>
-				fn(typeof level === 'string' ? echoLevel(level) : level, ...args)
+				call(typeof level === 'string' ? echoLevel(level) : level, ...args)
 
 			const fne = (...args: AnyArray) => {
 				if (
@@ -234,27 +233,28 @@ const echo = new Proxy(echoFn as Echo,
 					)
 				) {
 					const [err, full] = args
-					return fn(level, full ? err : err.message)
+					return fn(full ? err : err.message)
 				}
 
-				return fn(level, ...args)
+				return fn(...args)
 			}
+
+			const fnv = (..._args: AnyArray) => (args.verbose ? fnc as any : voidFn)(..._args)
+			const fni = (..._args: AnyArray) => (args.verbose ? fn : voidFn)(..._args)
 
 			/* eslint-disable indent */
 			const out =
-				prop === 'cst' ? fnc :
 				prop === 'err' ? fne :
-
-				prop === 'vrb' ? args?.verbose ? fnc : voidFn :
-				prop === 'inf' && !args?.verbose ? voidFn :
-
-				call
+				prop === 'cst' ? fnc :
+				prop === 'vrb' ? fnv :
+				prop === 'inf' ? fni :
+				fn
 			/* eslint-enable indent */
 
 			const wrapped = withLine(out)
 
-			if (!'inf,vrb'.includes(prop))
-				echoCache.set(prop, wrapped)
+			// if (!'inf,vrb'.includes(prop))
+			echoCache.set(prop, wrapped)
 
 			return wrapped
 		},

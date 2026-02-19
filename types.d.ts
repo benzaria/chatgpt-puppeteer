@@ -7,7 +7,8 @@ type __personas = typeof import('./src/agent/instructions.ts')
 
 declare global {
 
-  var shutdown: () => void
+  var isCLI: boolean
+  var shutdown: AsyncFn<never, never>
   var browser: Browser
   var page: Page
   var provider: Providers
@@ -16,16 +17,38 @@ declare global {
   var instructions: object
   var ws: WS
   var typing: number
+  var contacts: Record<string, number>
 
-
-  type IsAny<T> = 0 extends (1 & T) ? true : false
-  type IsNever<T> = [T] extends [never] ? true : false
   type Prettify<T> = {[K in keyof T]: T[K]} & {}
-  type Literal<T, U> = T | (U & Prettify<{}>)
+  type Literal<T extends U, U> = T | (U & Prettify<{}>)
   type ValueOf<T> = T extends AnyArray ? T[number] : T[keyof T]
-  type SyncFn<P extends AnyArray = [], R = void> = (...args: P) => R
-  type AsyncFn<P extends AnyArray = [], R = void> = (...args: P) => Promise<R>
 
+  type Promisify<T extends AnyFunction> =
+    T extends (this: infer T, ...args: infer P) => infer R
+      ? SyncFn<P, Promise<R>, T>
+      : never
+
+  type IsNever<T> = [T] extends [never] ? true : false
+  type IsAny<T> = 0 extends (1 & T) ? true : false
+
+  type IsUnknown<T> =
+    IsAny<T> extends false
+      ? unknown extends T
+        ? [T] extends [unknown]
+          ? true
+          : false
+        : false
+      : false
+
+  type SyncFn<P extends AnyArray = [], R = void, T = unknown> =
+    (IsNever<P> extends true ? [] : P) extends infer P extends AnyArray
+      ? IsUnknown<T> extends true
+        ? (...args: P) => R
+        : (this: T, ...args: P) => R
+      : never
+
+  type AsyncFn<P extends AnyArray = [], R = void, T = unknown> = SyncFn<P, Promise<R>, T>
+    
   type _ = '_'
   type VoidFn = (...args: AnyArray) => void
   type AnyArray = readonly any[]

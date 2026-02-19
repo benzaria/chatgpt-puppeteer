@@ -18,36 +18,36 @@ async function collectPrompt(prompt: string): Promise<string> {
 	return lines.join('\n')
 }
 
-async function startCLI(callback?: (...args: any[]) => any) {
-	//- await initPage(args.headless)
-	//- await initProvider(args.model)
-	//- await initModel(instructions)
-	await initBot()
-
-	echo.inf('\nBot Ready! Type your prompt below (or "exit" to quit):')
-	let prompt, response
+async function initCLI(callback?: (...args: any[]) => any) {
+	echo.inf.ln('Bot Ready! Type your prompt below (or "exit" to quit):')
+	let request, response
 
 	while (true) {
-		prompt = (await collectPrompt('--- Request ---')).trim()
+		request = (await collectPrompt('--- Request ---')).trim()
 
-		if (prompt.toLowerCase() === 'exit') break
-		if (!prompt) continue
+		if (request.toLowerCase() === 'exit') break
+		if (!request) continue
 
 		try {
-			response = await chat({ request: prompt })
+			response = await chat({ request })
 		} catch (err) {
-			echo.err('Error during ask:', err)
+			echo.err(err)
 		}
 
-		callback ? callback(prompt, response) : null
+		callback ? callback({ request, response }) : null
 	}
 
 	rl.close()
-	shutdown()
 }
 
-if (import.meta.main) startCLI()
+if (import.meta.main) {
+	(async () => {
+		await initBot()
+		await initCLI()
+		shutdown()
+	})()
+}
 
 export {
-	startCLI
+	initCLI
 }

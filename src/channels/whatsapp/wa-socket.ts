@@ -13,10 +13,10 @@ import {
 	readFile,
 } from 'node:fs/promises'
 
-import { join } from 'node:path'
-import { env } from '../../utils/config.ts'
-import { echo, Color } from '../../utils/tui.ts'
 import { delay, queue, lazy, voidFn } from '../../utils/helpers.ts'
+import { echo, Color } from '../../utils/tui.ts'
+import { env } from '../../utils/config.ts'
+import { join } from 'node:path'
 
 type CreateSocketOpts = {
   authDir?: string
@@ -30,10 +30,12 @@ type ReconnectFn = (opts: CreateSocketOpts) => Promise<WS>
 const getQR = lazy(async () => (await import('qrcode-terminal')).default)
 const getPino = lazy(async () => (await import('pino')).default)
 
-const qsaveCreds = queue(async (saveCreds: AsyncFn) => {
-	echo.vrb([Color.BLUE, 'Creds'], 'Save')
-	await saveCreds()
-})
+const qsaveCreds = queue(
+	async (saveCreds: AsyncFn) => {
+		echo.vrb([Color.BLUE, 'Creds'], 'Save')
+		await saveCreds()
+	}
+)
 
 async function backupCreds(authDir: string) {
 	echo.vrb.lr([Color.BLUE, 'Creds'], 'Backup')
@@ -57,7 +59,7 @@ async function restoreCredsIfCorrupted(authDir: string) {
 		JSON.parse(await readFile(creds, 'utf-8'))
 	} catch {
 		await copyFile(backup, creds)
-			.then(() => echo.vrb([Color.YELLOW, 'Creds'], 'Restore creds from backup.'))
+			.then(() => echo.vrb([Color.YELLOW, 'Creds'], 'Restore'))
 			.catch(echo.err)
 	}
 }
@@ -110,7 +112,7 @@ async function createWASocket(
 			if (opts.printQr) {
 				const QRCode = await getQR()
 
-				echo.inf('\n📱Scan this QR:\n')
+				echo.inf('\nScan this QR:\n')
 				QRCode.generate(qr, { small: true })
 			}
 		}
@@ -134,17 +136,17 @@ async function createWASocket(
 					sock.ws.close()
 				} catch {}
 
-				delay(1000, () => (reconnectFn ?? createWASocket)(opts))
+				delay('1'.s, () => (reconnectFn ?? createWASocket)(opts))
 			}
 			else {
-				echo.wrn('🚪 Logged out. Deleting auth folder.')
+				echo.wrn('Logged out. Deleting auth folder.')
 				await rm(authDir, { recursive: true, force: true })
 			}
 		}
 	})
 
 	// WS error safety
-	sock.ws?.on?.('error', (err: Error) => {
+	sock.ws.on('error', (err: Error) => {
 		echo.err('WASocket error:', err.message)
 	})
 

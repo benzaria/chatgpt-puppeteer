@@ -48,7 +48,7 @@ const file_system_actions = {
 	async exists() {
 		const { action, path, keywords = [] } = this
 
-		echo.cst([Color.BLUE, action], path)
+		echo.cst([Color.BLUE, action], { path, keywords })
 
 		const lKeywords: string[] = keywords
 			.map((key: string) => key.toLowerCase())
@@ -58,8 +58,9 @@ const file_system_actions = {
 				const result = files.filter(
 					file => (
 						lKeywords.filter(
-							(key: string) => file
-								.toLowerCase().includes(key),
+							key => file
+								.toLowerCase()
+								.includes(key),
 						)
 					).length,
 				)
@@ -77,7 +78,6 @@ const file_system_actions = {
 				)
 			})
 			.catch((err: Error) => error(this, err))
-
 	},
 
 	async make_dir() {

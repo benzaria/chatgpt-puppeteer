@@ -131,11 +131,23 @@ const main = {
 				'Default platform: whatsapp',
 				'Infer recipient from {from} when replying',
 				'Use {mentions[]} to resolve targets when applicable',
-				'To menteion recipients in messages use this format `@123456789`',
+				'To mention recipients in messages use this format `@123456789`',
 				'Generate message text if user intent implies sending but text missing',
 				'Do not fabricate unknown recipients',
 				'Message can have platform specific formatting',
 				'When listing elements make each one in a line, prefix with `-`'
+			]
+		},
+		{
+			name: 'contact',
+			description: 'search saved contacts',
+			returns_result: true,
+			structure: {
+				action: 'contact',
+				keywords: stringArr
+			},
+			rules: [
+				'Keywords are ideas of what the contact name could be made of',
 			]
 		},
 		{
@@ -160,7 +172,7 @@ const main = {
 				reason: string,
 			},
 			rules: [
-				'Only use when an a user has requested it',
+				'Only use when an auth user has requested it',
 				'Only use when a normal user hase provided confirmation (admin_key)',
 				'Always check auth users list before judging',
 				'Do NOT restart system for no other reason'

@@ -2,7 +2,7 @@ import { initPage, initModel, chat, initProvider } from './bot.ts'
 import { main } from '../agent/instructions.ts'
 import { echo } from '../utils/tui.ts'
 
-//@ts-ignore
+// @ts-expect-error Could not find a declaration file for module 'body-parser'.
 import bodyParser from 'body-parser'
 import express from 'express'
 

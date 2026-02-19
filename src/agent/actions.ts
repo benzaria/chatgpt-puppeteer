@@ -6,6 +6,7 @@ export * from './actions/system.ts'
 export * from './actions/math.ts'
 
 import type { Actions, ActionsType } from './actions/consts.ts'
+import { reply, results, error } from './actions/consts.ts'
 
 import { file_system_actions } from './actions/file_system.ts'
 import { messenger_actions } from './actions/messenger.ts'
@@ -23,5 +24,5 @@ const actions = {
 
 } as const satisfies Actions
 
-export { actions }
+export { actions, reply, results, error }
 export type { Actions, ActionsType }

@@ -11,9 +11,11 @@ import { join } from 'node:path'
 // --- CLEANUP LOGIC ---
 global.shutdown = async () => {
 	echo.inf('Closing session...')
+
 	await global.browser?.close()
 	await rm(join(env.user_data, 'Default/Sessions'), { recursive: true, force: true })
 		.catch(() => echo.vrb('err', 'No such file or directory: "/Default/Sessions"'))
+
 	process.exit()
 }
 
@@ -123,7 +125,7 @@ async function initModel(instructions: Instructions | InstructionsType, persona?
 		persona: global.persona,
 		uuid: page.url().split('/c/')[1]
 	}
-	echo.inf('Conversation:', conversation)
+	echo.inf.ln('Conversation:', conversation)
 
 	saveSecrets({ conversation })
 }
